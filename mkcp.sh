@@ -42,7 +42,7 @@ IFS=':'
 set -- $1
 IFS=${OLDIFS}
 if [ "$#" -ne "2" ]; then
-    echo "Component names need to look like \"library:proj\""
+    echo "Component names need to look like \"library:component\""
     exit 1
 fi
 LIBRARY=$1

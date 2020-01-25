@@ -25,15 +25,15 @@ WS_TOOLS=$(dirname $0)
 
 # Need at least one argument
 if [ $# -lt 1 ]; then
-    echo "Synopsis: $0 [-t] [-r] [-u meta=url ...] <ws-name> [<component> ...]"
+    echo "Synopsis: $0 [-t] [-r] [-u library=url ...] <ws-name> [<library:component> ...]"
     echo "  -t: Run tests for the components"
     echo "  -r: Generate a test report (ignored if -t not given)"
-    echo "  -u meta=url: Specify the clone URL for a meta"
+    echo "  -u library=url: Specify the clone URL for a library"
     exit 1
 fi
 
-# Initialise meta map (i.e mapping of meta to the clone URL prefix). Sadly this is the reason why
-# this script needs /bin/bash - other shells don't have associative arrays.
+# Initialise library map (i.e mapping of each library to its associated clone URL). Sadly this is
+# the reason why this script needs /bin/bash - other shells don't have associative arrays.
 typeset -A URL
 . ${WS_TOOLS}/urls.sh
 
@@ -42,7 +42,7 @@ URLSET=""
 RUNTEST=0
 GENREPORT=0
 while getopts tru: OPT; do
-    case "$OPT" in
+    case "${OPT}" in
         u)
             URLSET="${URLSET} ${OPTARG}"
             ;;
@@ -59,7 +59,7 @@ WS=$1
 shift
 COMPONENTS=$*
 
-# Parse all the meta=url options
+# Parse all the library=url options
 for i in ${URLSET}; do
     OLDIFS=${IFS}
     IFS='='
@@ -71,15 +71,15 @@ for i in ${URLSET}; do
         echo "  -u foobar=https://github.com/foobar"
         exit 1
     fi
-    META=$1
+    LIBRARY=$1
     NEW_URL=$2
-    OLD_URL=${URL[$META]}
+    OLD_URL=${URL[$LIBRARY]}
     if [ ! -z "${OLD_URL}" ]; then
-        echo "A repository URL for ${META} already exists: ${OLD_URL}"
+        echo "A repository URL for ${LIBRARY} already exists: ${OLD_URL}"
         exit 1
     fi
-    echo "Setting $META to $NEW_URL"
-    URL[$META]=${NEW_URL}
+    echo "Setting ${LIBRARY} to ${NEW_URL}"
+    URL[$LIBRARY]=${NEW_URL}
 done
 
 # Check if the workspace already exists
@@ -91,9 +91,9 @@ fi
 # Create the workspace
 mkdir ${WS}
 cd ${WS}
-echo "${BOLD}Creating top-level git repo...${NORM}"
+echo "${BOLD}Creating top-level git repository...${NORM}"
 git init .
-if [ "$OS" = "Windows_NT" ]; then
+if [ "${OS}" = "Windows_NT" ]; then
     export PROJ_HOME=$(pwd | sed 's#^/\([a-zA-Z]\)/#\1:/#g')
 else
     export PROJ_HOME=$(pwd)
@@ -104,7 +104,7 @@ Skeleton project.
 EOF
 git add README.md
 
-# Submodule the hdl-tools repo (needed for everything)
+# Submodule the hdl-tools repository (needed for everything)
 echo "${BOLD}Cloning makestuff/hdl-tools...${NORM}"
 git submodule add ${URL[makestuff]}/hdl-tools.git
 echo
@@ -112,34 +112,34 @@ mkdir ip
 
 # Git submodule each of the components requested by the user
 printf "SUBDIRS :=" > ip/Makefile
-for i in $COMPONENTS; do
+for i in ${COMPONENTS}; do
     OLDIFS=${IFS}
     IFS=':'
     set -- $i
     IFS=${OLDIFS}
     if [ "$#" -lt "2" -o "$#" -gt "3" ]; then
-        echo "Components need to be meta:proj or meta:proj:branch"
+        echo "Components need to be specified as \"library:component\" or \"library:component:branch\""
         exit 1
     fi
-    META=$1
-    REPO=$2
-    META_URL=${URL[$META]}
-    if [ -z "${META_URL}" ]; then
-        echo "You must declare a repository URL for $META"
+    LIBRARY=$1
+    COMPONENT=$2
+    LIBRARY_URL=${URL[$LIBRARY]}
+    if [ -z "${LIBRARY_URL}" ]; then
+        echo "You must declare a repository URL for ${LIBRARY}"
         exit 1
     fi
     if [ "$#" -eq "2" ]; then
-        echo "${BOLD}Cloning ${META}/${REPO}...${NORM}"
-        git submodule add ${META_URL}/${REPO}.git ip/${META}/${REPO}
+        echo "${BOLD}Cloning ${LIBRARY}:${COMPONENT}...${NORM}"
+        git submodule add ${LIBRARY_URL}/${COMPONENT}.git ip/${LIBRARY}/${COMPONENT}
     else
         BRANCH=$3
-        echo "${BOLD}Cloning ${META}/${REPO}/${BRANCH}...${NORM}"
-        git submodule add ${META_URL}/${REPO}.git ip/${META}/${REPO}
-        cd ip/${META}/${REPO}
+        echo "${BOLD}Cloning ${LIBRARY}/${COMPONENT}/${BRANCH}...${NORM}"
+        git submodule add ${LIBRARY_URL}/${COMPONENT}.git ip/${LIBRARY}/${COMPONENT}
+        cd ip/${LIBRARY}/${COMPONENT}
         git checkout --detach ${BRANCH}
         cd ../../..
     fi
-    printf " \\\\\n\t${META}/${REPO}" >> ip/Makefile
+    printf " \\\\\n\t${LIBRARY}/${COMPONENT}" >> ip/Makefile
     echo
 done
 cat >> ip/Makefile <<EOF
@@ -153,14 +153,14 @@ EOF
 git add ip/Makefile
 
 # Maybe run the tests, maybe generate a report
-if [ "$RUNTEST" -eq "1" ]; then
+if [ "${RUNTEST}" -eq "1" ]; then
     echo "${BOLD}Running tests...${NORM}"
-    if [ "$GENREPORT" -eq "1" ]; then
+    if [ "${GENREPORT}" -eq "1" ]; then
         make -C ip CONTINUE_ON_FAILURE=1 test
         echo
     
         echo "${BOLD}Generating test report...${NORM}"
-        . ${WS_TOOLS}/report.sh
+        . ${WS_TOOLS}/mkrp.sh
     else
         make -C ip test
     fi
