@@ -125,27 +125,31 @@ It will already be functional, so you can immediately run the tests:
 
 Notice that the component-name is `fpgafoo:z80-core`, which means it will exist at `$PROJ_HOME/ip/fpgafoo/z80-core`, but in the generated code, the hyphen is replaced with an underscore in order to make it a valid SystemVerilog identifier:
 
-    $ cat $PROJ_HOME/ip/fpgafoo/z80-core/z80_core.sv
-    module fpgafoo_z80_core#(
-        parameter int A_NBITS,
-        parameter int B_NBITS
-      )(
-        input  logic                        clk_in,
-        input  logic[A_NBITS-1 : 0]         a_in,
-        input  logic[B_NBITS-1 : 0]         b_in,
-        output logic[A_NBITS+B_NBITS-1 : 0] x_out
-      );
-      always_ff @(posedge clk_in) begin
-        x_out <= a_in * b_in;
-      end
-    endmodule
+```systemverilog
+$ cat $PROJ_HOME/ip/fpgafoo/z80-core/z80_core.sv
+module fpgafoo_z80_core#(
+    parameter int A_NBITS,
+    parameter int B_NBITS
+  )(
+    input  logic                        clk_in,
+    input  logic[A_NBITS-1 : 0]         a_in,
+    input  logic[B_NBITS-1 : 0]         b_in,
+    output logic[A_NBITS+B_NBITS-1 : 0] x_out
+  );
+  always_ff @(posedge clk_in) begin
+    x_out <= a_in * b_in;
+  end
+endmodule
+```
 
 The testbench uses [SVUnit](http://agilesoc.com/open-source-projects/svunit) macros to do asserts, etc. Running the testbench in headless mode as shown above just runs the lines 18-21 of the `sim.do` file:
 
-    set SEED [clock seconds]
-    foreach B_NBITS {2 4 8 16} {
-      cli_run "-gSEED=$SEED -gA_NBITS=16 -gB_NBITS=$B_NBITS"
-    }
+```tcl
+set SEED [clock seconds]
+foreach B_NBITS {2 4 8 16} {
+  cli_run "-gSEED=$SEED -gA_NBITS=16 -gB_NBITS=$B_NBITS"
+}
+```
 
 That will set the `SEED` parameter (which seeds the random-number generator used for choosing test values) to the number of seconds since the epoch, `A_NBITS` to the fixed value `16` and it will try running the testbench with several values of `B_NBITS`: `2`, `4`, `8` and `16`. If you don't care about that stuff, you can simplify it. The simplest valid headless-mode entry in `sim.do` is just `cli_run` on its own.
 
