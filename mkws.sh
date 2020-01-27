@@ -28,7 +28,7 @@ if [ $# -lt 1 ]; then
     echo "Synopsis: $0 [-t] [-r] [-u library=url ...] <ws-name> [<library:component> ...]"
     echo "  -t: Run tests for the components"
     echo "  -r: Generate a test report (ignored if -t not given)"
-    echo "  -u library=url: Specify the clone URL for a library"
+    echo "  -u library=url: Specify the clone URL for a library of components"
     exit 1
 fi
 

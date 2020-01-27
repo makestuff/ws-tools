@@ -19,7 +19,7 @@ The MakeStuff FPGA components and tools all assume a standard project layout, co
 This creates a top-level workspace for you, possibly incorporating a bunch of reusable components as [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules), maybe running their tests and generating a test-report.
 
     $ mkws.sh
-    Synopsis: ./mkws.sh [-t] [-r] [-u meta=url ...] <ws-name> [<library:component> ...]
+    Synopsis: ./mkws.sh [-t] [-r] [-u library=url ...] <ws-name> [<library:component> ...]
       -t: Run tests for the components
       -r: Generate a test report (ignored if -t not given)
       -u library=url: Specify the clone URL for a library of components
