@@ -101,12 +101,17 @@ fi
 cat > README.md <<EOF
 ## ${WS}
 Skeleton project.
+
+These git commands were executed during setup:
+  export PROJ_HOME=${PROJ_HOME}
+  cd \${PROJ_HOME}
+  git init .
 EOF
-git add README.md
 
 # Submodule the hdl-tools repository (needed for everything)
 echo "${BOLD}Cloning makestuff/hdl-tools...${NORM}"
 git submodule add ${URL[makestuff]}/hdl-tools.git
+echo "  git submodule add ${URL[makestuff]}/hdl-tools.git" >> README.md
 echo
 mkdir ip
 
@@ -129,15 +134,18 @@ for i in ${COMPONENTS}; do
         exit 1
     fi
     if [ "$#" -eq "2" ]; then
-        echo "${BOLD}Cloning ${LIBRARY}:${COMPONENT}...${NORM}"
+        echo "${BOLD}Making a git submodule of ${LIBRARY}:${COMPONENT}...${NORM}"
         git submodule add ${LIBRARY_URL}/${COMPONENT}.git ip/${LIBRARY}/${COMPONENT}
+        echo "  git submodule add ${LIBRARY_URL}/${COMPONENT}.git ip/${LIBRARY}/${COMPONENT}" >> README.md
     else
         BRANCH=$3
-        echo "${BOLD}Cloning ${LIBRARY}/${COMPONENT}/${BRANCH}...${NORM}"
+        echo "${BOLD}Making a git submodule of ${LIBRARY}:${COMPONENT}:${BRANCH}...${NORM}"
         git submodule add ${LIBRARY_URL}/${COMPONENT}.git ip/${LIBRARY}/${COMPONENT}
         cd ip/${LIBRARY}/${COMPONENT}
         git checkout --detach ${BRANCH}
         cd ../../..
+        echo "  git submodule add ${LIBRARY_URL}/${COMPONENT}.git ip/${LIBRARY}/${COMPONENT}" >> README.md
+        echo "  cd ip/${LIBRARY}/${COMPONENT}; git checkout --detach ${BRANCH}; cd ../../.." >> README.md
     fi
     printf " \\\\\n\t${LIBRARY}/${COMPONENT}" >> ip/Makefile
     echo
@@ -150,6 +158,9 @@ include \$(PROJ_HOME)/hdl-tools/common.mk
 clean::
 	rm -rf sim-libs
 EOF
+echo "  git add README.md" >> README.md
+echo "  git add ip/Makefile" >> README.md
+git add README.md
 git add ip/Makefile
 
 # Maybe run the tests, maybe generate a report
